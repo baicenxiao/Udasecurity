@@ -7,22 +7,28 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.awt.image.BufferedImage;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 //import junit.framework.TestCase;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SecurityServiceTest{
 
     private SecurityService securityService;
@@ -84,7 +90,7 @@ public class SecurityServiceTest{
     void ifPendingAlarmAndSensorInactive_returnNoAlarmState() {
         when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        sensor.setActive(true);
+        securityService.changeSensorActivationStatus(sensor, true);
         securityService.changeSensorActivationStatus(sensor, false);
 
         verify(securityRepository, times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -173,6 +179,50 @@ public class SecurityServiceTest{
         securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
 
         verify(securityRepository, times(1)).setAlarmStatus(AlarmStatus.ALARM);
+    }
+
+    @Test
+    void checkChangeSensorActivationStatusWorks(){
+        securityRepository.setAlarmStatus(AlarmStatus.PENDING_ALARM);
+        securityService.changeSensorActivationStatus(sensor, false);
+        assert sensor.getActive().equals(false);
+        verify(securityRepository, times(1)).setAlarmStatus(any(AlarmStatus.class));
+    }
+
+    @ParameterizedTest
+    @EnumSource(ArmingStatus.class)
+    public void setArmingStatusMethod(ArmingStatus status) {
+        securityService.setArmingStatus(status);
+    }
+
+    @Test
+    public void addRemoveStatusListener() {
+        securityService.addStatusListener(statusListener);
+        securityService.removeStatusListener(statusListener);
+    }
+
+    @Test
+    public void addRemoveSensor() {
+        securityService.addSensor(sensor);
+        assertNotNull(securityService.getSensors());
+        securityService.removeSensor(sensor);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"PENDING_ALARM,DOOR,true", "PENDING_ALARM,DOOR,false",
+                "PENDING_ALARM,WINDOW,true", "PENDING_ALARM,WINDOW,false",
+                "NO_ALARM,DOOR,true", "NO_ALARM,DOOR,false"})
+    public void changeSensorStatusWithAlarms(AlarmStatus alarmStatus, SensorType sensorType, Boolean active){
+        Mockito.when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
+        sensor.setActive(true);
+        securityService.changeSensorActivationStatus(sensor, active);
+        sensor.setActive(false);
+        securityService.changeSensorActivationStatus(sensor, active);
+        Mockito.when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
+        sensor.setActive(true);
+        securityService.changeSensorActivationStatus(sensor, active);
+        sensor.setActive(false);
+        securityService.changeSensorActivationStatus(sensor, active);
     }
 
 }
