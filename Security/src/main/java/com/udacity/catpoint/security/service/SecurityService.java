@@ -117,14 +117,21 @@ public class SecurityService {
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
-        AlarmStatus actualAlarmStatus = securityRepository.getAlarmStatus();
-
-        if (actualAlarmStatus != AlarmStatus.ALARM){
-            if(!sensor.getActive() && active) {
-                handleSensorActivated();
-            } else if (sensor.getActive() && !active) {
-                handleSensorDeactivated();
-            }
+//        AlarmStatus actualAlarmStatus = securityRepository.getAlarmStatus();
+//
+//        if (actualAlarmStatus != AlarmStatus.ALARM){
+//            if(!sensor.getActive() && active) {
+//                handleSensorActivated();
+//            } else if (sensor.getActive() && !active) {
+//                handleSensorDeactivated();
+//            }
+//        }
+        if(!sensor.getActive() && active) {
+            handleSensorActivated();
+        } else if (sensor.getActive() && !active) {
+            handleSensorDeactivated();
+        } else if (sensor.getActive() || active){
+            handleSensorDeactivated();
         }
 
         sensor.setActive(active);
