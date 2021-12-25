@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 //import junit.framework.TestCase;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
+//@MockitoSettings(strictness = Strictness.LENIENT)
 public class SecurityServiceTest{
 
     private SecurityService securityService;
@@ -99,7 +99,9 @@ public class SecurityServiceTest{
     @ParameterizedTest
     @ValueSource(booleans = {true, false})
     void ifAlarmIsActive_changeSensorShouldNotAffectAlarmState(boolean status) {
-        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
+        if (status){
+            when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
+        }
         securityService.changeSensorActivationStatus(sensor, status);
 
         verify(securityRepository, never()).setAlarmStatus(any(AlarmStatus.class));
@@ -119,8 +121,8 @@ public class SecurityServiceTest{
     @ParameterizedTest
     @EnumSource(value = AlarmStatus.class, names = {"NO_ALARM", "PENDING_ALARM", "ALARM"})
     void ifSensorDeactivatedWhileInactive_noChangesToAlarmState(AlarmStatus status) {
-        when(securityRepository.getAlarmStatus()).thenReturn(status);
-        securityService.changeSensorActivationStatus(sensor, false);
+//        when(securityRepository.getAlarmStatus()).thenReturn(status);
+//        securityService.changeSensorActivationStatus(sensor, false);
         securityService.changeSensorActivationStatus(sensor, false);
 
         verify(securityRepository, never()).setAlarmStatus(any(AlarmStatus.class));
